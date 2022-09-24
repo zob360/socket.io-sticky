@@ -1,7 +1,7 @@
 const cluster = require("cluster");
 
 const setupMaster = (httpServer, opts) => {
-  if (!cluster.isMaster) {
+  if (!cluster.isPrimary) {
     throw new Error("not master");
   }
 
@@ -57,10 +57,10 @@ const setupMaster = (httpServer, opts) => {
   };
 
   httpServer.on("connection", (socket) => {
-    socket.once("data", (buffer) => {
+    socket.once("data", async (buffer) => {
       socket.pause();
       const data = buffer.toString();
-      const workerId = computeWorkerId(data);
+      const workerId = await computeWorkerId(data);
       cluster.workers[workerId].send(
         { type: "sticky:connection", data },
         socket,
